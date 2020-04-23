@@ -1,14 +1,17 @@
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
 
+// What device you are programming
 const char DEVICE = 'A';
-char authA[] = "vVjNXIv1zQ_V-BLvk9QnHgAIcu-nxGG0";
-char authB[] = "jJD3LrHpmD5VEvwqggWRPJwYzAnaA2Ho";
-
 // Your WiFi credentials.
 // Set password to "" for open networks.
 char ssid[] = "Rmadillow";
 char pass[] = "Welc0me2the0nline";
+
+
+char authA[] = "vVjNXIv1zQ_V-BLvk9QnHgAIcu-nxGG0";
+char authB[] = "jJD3LrHpmD5VEvwqggWRPJwYzAnaA2Ho";
+
 
 #if DEVICE == 'A'
   #define V_LED_PIN V2
@@ -31,7 +34,10 @@ struct RGB color_remote; // store what color the remote device is set to
 
 // Pin assignments
 const int green_pin = 0;
-const int red_pin = 4;
+int red_pin = 4;
+#if DEVICE == 'B'
+  red_pin = 14;
+#endif
 const int blue_pin = 2;
 const int button_pin = 5;
 const unsigned long led_on_time = 700; // how many ms an led is on for
@@ -42,20 +48,29 @@ WidgetLED button_led(V_LED_PIN);
 WidgetBridge bridge1(V10);
 
 
-
 void setup() {
   // Debug console
+  const int pre_connect_delay = 250;
+  const int post_connect_delay = 500;
   Serial.begin(115200);
   displayColor(255,0,0);
-  delay(250);
+  delay(pre_connect_delay);
   displayColor(0,255,0);
-  delay(250);
+  delay(pre_connect_delay);
   displayColor(0,0,255);
-  delay(250);
+  delay(pre_connect_delay);
 
-  Blynk.begin(authA, ssid, pass); // customized
-
-
+  if (DEVICE == 'A') {
+    Blynk.begin(authA, ssid, pass); // connect to Blynk server
+    color_local.red = 0;
+    color_local.green = 0;
+    color_local.blue = 255; // customized
+  } else {
+    Blynk.begin(authB, ssid, pass); // connect to Blynk server
+    color_local.red = 0;
+    color_local.green = 255;
+    color_local.blue = 0; // customized
+  }
 
   pinMode(red_pin, OUTPUT);
   pinMode(blue_pin, OUTPUT);
@@ -64,17 +79,13 @@ void setup() {
   digitalWrite(green_pin,LOW);
   digitalWrite(blue_pin, LOW);
   pinMode(button_pin, INPUT_PULLUP);
-
-  color_local.red = 0;
-  color_local.green = 0;
-  color_local.blue = 255; // customized
   
   displayColor(255,0,0);
-  delay(500);
+  delay(post_connect_delay);
   displayColor(0,255,0);
-  delay(500);
+  delay(post_connect_delay);
   displayColor(0,0,255);
-  delay(500);
+  delay(post_connect_delay);
 }
 
 void loop() {
@@ -100,8 +111,8 @@ void button_press_local() {
         sweepColors();
         return;
       }
-
     }
+    
     // if we get out of the loop, then it was just a press
     Serial.println("Pressed");
     press_time = millis();
@@ -112,7 +123,12 @@ void button_press_local() {
 }
 
 BLYNK_CONNECTED() {
-  bridge1.setAuthToken(authB); // Place the AuthToken of the second hardware here
+  if (DEVICE == 'A') {
+    bridge1.setAuthToken(authB); // Place the AuthToken of the second hardware here
+  } else {
+    bridge1.setAuthToken(authA); // Place the AuthToken of the second hardware here
+  }
+  
 }
 
 // Zebra
@@ -121,6 +137,7 @@ BLYNK_WRITE(V5) {
   color_remote.green = param[1].asInt();
   color_remote.blue = param[2].asInt();
   displayColor(&color_remote);
+  delay(100);
 }
 
 // BRIDGE Data in
@@ -151,8 +168,7 @@ void showColors() {
 
 
 void checkLedTimes() {
-  if (color_local.is_on) {
-    //Serial.println("local check");
+  if (color_local.is_on) { // if the local led is on
     if (millis() - color_local.press_time > led_on_time) { // over time limit
       rgbOff(&color_local); // set values to off
       button_led.off();
@@ -160,7 +176,7 @@ void checkLedTimes() {
     }
   }
 
-  if (color_remote.is_on) {
+  if (color_remote.is_on) { // if the remote led is on
     if (millis() - color_remote.press_time > led_on_time) { // over time limit
       rgbOff(&color_remote); // set values to off
       Serial.println("Remote Off");
