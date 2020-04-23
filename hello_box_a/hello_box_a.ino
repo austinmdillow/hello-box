@@ -1,6 +1,3 @@
-#define BLYNK_PRINT Serial
-
-
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
 
@@ -13,6 +10,12 @@ char authB[] = "jJD3LrHpmD5VEvwqggWRPJwYzAnaA2Ho";
 char ssid[] = "Rmadillow";
 char pass[] = "Welc0me2the0nline";
 
+#if DEVICE == 'A'
+  #define V_LED_PIN V2
+#else
+  #define V_LED_PIN V3
+#endif
+
 struct RGB {
   int red;
   int blue;
@@ -23,18 +26,19 @@ struct RGB {
 
 bool button_pressed = false;
 
-struct RGB color_local;
-struct RGB color_remote;
+struct RGB color_local; // store what color we have set on our device
+struct RGB color_remote; // store what color the remote device is set to
 
-int green_pin = 0;
-int red_pin = 4;
-int blue_pin = 2;
-int button_pin = 5;
-unsigned long led_on_time = 700; // how many ms an led is on for
+// Pin assignments
+const int green_pin = 0;
+const int red_pin = 4;
+const int blue_pin = 2;
+const int button_pin = 5;
+const unsigned long led_on_time = 700; // how many ms an led is on for
 
 #define BRIDGE_PIN V10
 
-WidgetLED button_led(V2); // customized
+WidgetLED button_led(V_LED_PIN);
 WidgetBridge bridge1(V10);
 
 
