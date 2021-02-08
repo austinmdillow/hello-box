@@ -3,14 +3,14 @@
 
 // What device you are programming
 const char DEVICE = 'A';
+#define DEBUG false
 // Your WiFi credentials.
 // Set password to "" for open networks.
 char ssid[] = "Rmadillow";
 char pass[] = "Welc0me2the0nline";
 
-
-char authA[] = "vVjNXIv1zQ_V-BLvk9QnHgAIcu-nxGG0";
-char authB[] = "jJD3LrHpmD5VEvwqggWRPJwYzAnaA2Ho";
+char authA[] = "vVjNXIv1zQ_V-BLvk9QnHgAIcu-nxGG0"; // authentication for device A
+char authB[] = "jJD3LrHpmD5VEvwqggWRPJwYzAnaA2Ho"; // authentication for device B
 
 
 #if DEVICE == 'A'
@@ -36,14 +36,13 @@ struct RGB color_remote; // store what color the remote device is set to
 const int green_pin = 0;
 int red_pin = 4;
 #if DEVICE == 'B'
-  red_pin = 14;
+  red_pin = 14; // i wired the pin wrong :(
 #endif
 const int blue_pin = 2;
 const int button_pin = 5;
 const unsigned long led_on_time = 700; // how many ms an led is on for
 
 #define BRIDGE_PIN V10
-
 WidgetLED button_led(V_LED_PIN);
 WidgetBridge bridge1(V10);
 
@@ -89,7 +88,6 @@ void setup() {
 }
 
 void loop() {
-  //Serial.println("loop");
   Blynk.run();
   button_press_local();
   checkLedTimes();
@@ -192,11 +190,13 @@ void rgbOff(struct RGB *rgb_s) {
 void displayColor(int r, int g, int b) {
   analogWrite(red_pin, r);
   analogWrite(green_pin, g);
-  analogWrite(blue_pin, b); 
-  Serial.print(r);
-  Serial.print(g);
-  Serial.print(b);
-  Serial.println("displaying color");
+  analogWrite(blue_pin, b);
+  if DEBUG {
+    Serial.print(r);
+    Serial.print(g);
+    Serial.print(b);
+    Serial.println("displaying color");
+  }
 }
 void displayColor(struct RGB *rgb_s) {
   displayColor(rgb_s->red, rgb_s->green, rgb_s->blue);
